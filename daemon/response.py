@@ -211,12 +211,16 @@ class Response():
         try:
             with open(filepath, "rb") as f:
                 content = f.read()
+            if path == "return.json":
+                # Clear the return.json
+                with open(filepath, "w") as f:
+                    f.write("")
             return len(content), content
         except FileNotFoundError:
             print("[Response] file not found {}".format(filepath))
             return 0,None
         except Exception as e:
-            print("[Response] cant read the file {}".format(filepath))
+            print("[Response] can't read the file {}".format(filepath))
             return 0,None
         
 
@@ -274,8 +278,9 @@ class Response():
             #case set-cookie: auth=true
             self.cookies["auth"]="true"
             headers["Set-Cookie"] = "auth=true"
-            self.status_code = 200
-            self.reason = "OK"
+            if not self.status_code: 
+                self.status_code = 200
+                self.reason = "OK"
         status_line = f"HTTP/1.1 {self.status_code} {self.reason}\r\n"
         header_lines = "".join(f"{k}: {v}\r\n" for k, v in self.headers.items())
         fmt_header = status_line + header_lines + "\r\n"
@@ -341,6 +346,9 @@ class Response():
         #
         # TODO: add support objects
         #
+        elif mime_type == 'application/octet-stream':
+            base_dir = self.prepare_content_type(mime_type = 'application/json')
+            path = "return.json"
         else:
             return self.build_notfound()
 
