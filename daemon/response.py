@@ -214,10 +214,10 @@ class Response():
             return len(content), content
         except FileNotFoundError:
             print("[Response] file not found {}".format(filepath))
-            return 0,None
+            return 0, b""
         except Exception as e:
             print("[Response] cant read the file {}".format(filepath))
-            return 0,None
+            return 0, b""
         
 
 
@@ -264,24 +264,30 @@ class Response():
         #
         # TODO prepare the request authentication
         #
-	# self.auth = ...
 
-        authorize = request.auth
-        if not authorize:
-            self.status_code = 401
-            self.reason = "Unauthorized page"
-        else:
-            #case set-cookie: auth=true
-            self.cookies["auth"]="true"
-            headers["Set-Cookie"] = "auth=true"
-            self.status_code = 200
-            self.reason = "OK"
+        # Status line
         status_line = f"HTTP/1.1 {self.status_code} {self.reason}\r\n"
-        header_lines = "".join(f"{k}: {v}\r\n" for k, v in self.headers.items())
-        fmt_header = status_line + header_lines + "\r\n"
-        return str(fmt_header).encode('utf-8')
-        # Build header string
 
+        # Header lines (use the complete 'headers' dictionary)
+        if self.cookies:
+            headers["Set-Cookie"] = [
+                f"{k}={v}"
+                for k, v in self.cookies.items()
+            ]
+
+        header_lines = ""
+        for k, v in headers.items():
+            if isinstance(v, list):
+                for item in v:
+                    header_lines += f"{k}: {item}\r\n"
+            else:
+                header_lines += f"{k}: {v}\r\n"
+
+        # Final header string
+        fmt_header = status_line + header_lines + "\r\n"
+        print(f"[Response.Header] Sending Header:\n{fmt_header}") # Keep this print for verification
+
+        return fmt_header.encode("utf-8")
 
 
     def build_notfound(self):
@@ -343,22 +349,25 @@ class Response():
         #
         else:
             return self.build_notfound()
-
-        c_len, self._content = self.build_content(path, base_dir)
-        self._header = self.build_response_header(request)
-
-        # === ADDED DEBUGGING BLOCK ===
-        print("--- DEBUG: CONTENT CHECK ---")
-        print(f"Content Length (c_len): {c_len}")
         
-        # Print content in readable form (use .decode for text, or show bytes for binary)
-        if c_len > 0:
-            if mime_type.startswith('text'):
-                print(f"Content Sample (Decoded): {self._content[:100].decode(errors='ignore')}...")
-            else:
-                print(f"Content Sample (Bytes): {self._content[:50]}...")
-        else:
-            print("Content is EMPTY or None.")
-        print("----------------------------")
-        # =============================
+        c_len, self._content = self.build_content(path, base_dir)
+
+        self._header = self.build_response_header(request)
+        print(f"[Response] Header building complete. Cookies to set: {self.cookies}")
+
         return self._header + self._content
+    
+    # helper function
+    def build_unauthorized(self):
+        body = "401 Unauthorized"
+        return (
+            "HTTP/1.1 401 Unauthorized\r\n"
+            "Accept-Ranges: bytes\r\n"
+            "Content-Type: text/html\r\n"
+            f"Content-Length: {len(body)}\r\n"
+            "Cache-Control: no-store\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            f"{body}"
+            ).encode("utf-8")
+

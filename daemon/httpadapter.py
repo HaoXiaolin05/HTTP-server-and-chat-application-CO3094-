@@ -106,18 +106,56 @@ class HttpAdapter:
         msg = conn.recv(1024).decode()
         req.prepare(msg, routes)
 
-        #tu them de check
-        #req.path = '/index.html'
+        #get req body
+        body=req.body
+
+        #TASK 1A: Implement authentication handling
+        if req.method == "POST" and req.path == "/login":
+            params = {}
+            for pair in body.split("&"):
+                if "=" in pair:
+                    key, value = pair.split("=", 1)
+                    params[key] = value # for ex: username=long&password=123 become username: long, password: 123
+            if params.get("username") == "admin" and params.get("password") == "password":
+                #auth_result = True
+                req.prepare_auth(True)
+                req.path = '/index.html'
+
+                resp.cookies['auth'] = 'true'
+                resp.status_code=200
+                resp.reason='OK'
+                #resp.headers['Set-Cookie'] = 'auth=true; Path=/; HttpOnly'
+            else:
+                conn.sendall(resp.build_unauthorized())
+                conn.close()
+                return #401
+        #TASK 1B: Implement cookie-based authentication
+        protected_paths = ["/","/login", "/index.html"]
+
+        if req.method == "GET" and req.path in protected_paths:
+            auth = req.cookies.get("auth")
+            if not auth:
+                # user is NOT authenticated => force login
+                req.path = "/login.html"
+                resp.status_code = 200
+                resp.reason = "OK"
+            else:         
+                req.path = "/index.html"  
+
+
         # Handle request hook
         if req.hook:
             print("[HttpAdapter] hook in route-path METHOD {} PATH {}".format(req.hook._route_path,req.hook._route_methods)) # o day bi nguoc ha ta?
-            req.hook(headers = "bksysnet",body = "get in touch")
+
+            #req.hook(headers = "bksysnet",body = "get in touch")
             #
             # TODO: handle for App hook here
             #
 
+        
         # Build response
         response = resp.build_response(req)
+
 
         #print(response)
         conn.sendall(response)
@@ -231,3 +269,4 @@ class HttpAdapter:
             headers["Proxy-Authorization"] = (username, password)
 
         return headers
+    

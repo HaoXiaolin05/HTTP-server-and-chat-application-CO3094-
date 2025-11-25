@@ -102,32 +102,6 @@ class Request():
         #
         # TODO manage the webapp hook in this mounting point
         #
-        
-        #POST /1/2/forms2.php HTTP/1.1
-        #Host: www.httprecipes.com
-        #User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Fir
-        #Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,ima
-        #Accept-Language: en-us;q=0.5
-        #Accept-Encoding: gzip,deflate
-        #Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
-        #Keep-Alive: 300
-        #Connection: keep-alive
-        #Referer: http://www.httprecipes.com/1/2/forms.php
-        #Cookie: test-cookie=MikesSuperBigCookie
-        #Content-Type: application/x-www-form-urlencoded
-        #Content-Length: 22
-
-        #GET /test1/ HTTP/1.1
-        #Host: www.bksysnet.edu
-        #User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
-        #Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-        #Accept-Language: en-US,en;q=0.5
-        #Accept-Encoding: gzip, deflate
-        #Authorization: Basic dGM6dGM=
-        #Connection: keep-alive
-        #Upgrade-Insecure-Requests: 1
-        #Priority: u=0, i
-
 
         if not routes == {}:
             self.routes = routes
@@ -158,16 +132,6 @@ class Request():
         if len(parts) > 1:
             body = parts[1]
         self.prepare_body(body,None,None) #now we still not handle multipara?
-
-        if self.method=="POST" and self.path == "/login":
-            self.prepare_auth(self.body,self.path)    
-        else:
-            self.auth=True #dummy authorize for checking index page
-            #self.auth=False
-            if self.cookies.get("auth","")=="true":
-                self.auth=True
-            
-
 
         return
 
@@ -226,18 +190,10 @@ class Request():
         #
         # TODO prepare the request authentication
         #
-        self.auth = False
-        if url:
-            self.url=url
-        if auth != "":
-            params = {}
-            for pair in auth.split("&"):
-                if "=" in pair:
-                    key, value = pair.split("=", 1)
-                    params[key] = value # for ex: username=long&password=123 become username: long, password: 123
-            if url=="/login" and params[0]=="admin" and params[1]=="password":
-                self.auth=True  
-                self.prepare_cookies("auth=true")
+        self.auth = auth
+        if auth:
+            self.cookies["auth"] = "true"
+            self.prepare_cookies("auth=true")
         return
 
     def prepare_cookies(self, cookies):

@@ -36,9 +36,9 @@ from .dictionary import CaseInsensitiveDict
 #: A dictionary mapping hostnames to backend IP and port tuples.
 #: Used to determine routing targets for incoming requests.
 PROXY_PASS = {
-    "192.168.1.180:8080": ('192.168.1.180', 9000),
-    "app1.local": ('192.168.1.180', 9001),
-    "app2.local": ('192.168.1.180', 9002),
+    "192.168.1.243:8080": ('192.168.1.243', 9000),
+    "app1.local": ('10.128.16.59', 9001),
+    "app2.local": ('10.128.16.59', 9002),
 }
 
 
@@ -90,7 +90,7 @@ def resolve_routing_policy(hostname, routes):
 
     print(hostname)
     #proxy_map, policy = routes.get(hostname,('127.0.0.1:9000','round-robin'))
-    proxy_map, policy = routes.get(hostname,('192.168.1.180:9000','round-robin'))
+    proxy_map, policy = routes.get(hostname,('192.168.1.243:9000','round-robin'))
     print (proxy_map)
     print (policy)
 
@@ -105,7 +105,7 @@ def resolve_routing_policy(hostname, routes):
             #       basic default host in your self-defined system
             # Use a dummy host to raise an invalid connection
             #proxy_host = '127.0.0.1'
-            proxy_host = '192.168.1.180'
+            proxy_host = '10.130.3.20'
             proxy_port = '9000'
         elif len(proxy_map) == 1:
             proxy_host, proxy_port = proxy_map[0].split(":", 2)
@@ -115,7 +115,7 @@ def resolve_routing_policy(hostname, routes):
         else:
             # Out-of-handle mapped host
             #proxy_host = '127.0.0.1'
-            proxy_host = '192.168.1.180'
+            proxy_host = '10.130.3.20'
             proxy_port = '9000'
     else:
         print("[Proxy] resolve route of hostname {} is a singulair to".format(hostname))
