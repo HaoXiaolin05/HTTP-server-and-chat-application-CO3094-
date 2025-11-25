@@ -211,6 +211,10 @@ class Response():
         try:
             with open(filepath, "rb") as f:
                 content = f.read()
+            if path == "return.json":
+                # Clear the return.json
+                with open(filepath, "w") as f:
+                    f.write("")
             return len(content), content
         except FileNotFoundError:
             print("[Response] file not found {}".format(filepath))
@@ -347,6 +351,9 @@ class Response():
         #
         # TODO: add support objects
         #
+        elif mime_type == 'application/octet-stream':
+            base_dir = self.prepare_content_type(mime_type = 'application/json')
+            path = "return.json"
         else:
             return self.build_notfound()
         
